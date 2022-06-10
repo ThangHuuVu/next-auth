@@ -201,11 +201,11 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.WORKOS_ID,
       clientSecret: process.env.WORKOS_SECRET,
     }),
-    BoxyHQSAMLProvider({
-      issuer: process.env.BOXYHQSAML_ISSUER,
-      clientId: process.env.BOXYHQSAML_ID,
-      clientSecret: process.env.BOXYHQSAML_SECRET,
-    }),
+    // BoxyHQSAMLProvider({
+    //   issuer: process.env.BOXYHQSAML_ISSUER,
+    //   clientId: process.env.BOXYHQSAML_ID,
+    //   clientSecret: process.env.BOXYHQSAML_SECRET,
+    // }),
   ],
   debug: true,
   theme: {

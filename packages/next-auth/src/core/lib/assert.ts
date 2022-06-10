@@ -1,10 +1,13 @@
 import {
+  InvalidCallbackUrl,
   MissingAdapter,
   MissingAPIRoute,
   MissingAuthorize,
   MissingSecret,
   UnsupportedStrategy,
 } from "../errors"
+import * as cookie from "./cookie"
+import parseUrl from "../../lib/parse-url"
 
 import type { NextAuthHandlerParams } from ".."
 import type { WarningCode } from "../../lib/logger"
@@ -17,6 +20,14 @@ type ConfigError =
   | MissingAdapter
 
 let twitterWarned = false
+
+function isValidHttpUrl(url: string) {
+  try {
+    return /^https?:/.test(new URL(url).protocol)
+  } catch {
+    return false
+  }
+}
 
 /**
  * Verify that the user configured `next-auth` correctly.
@@ -36,6 +47,21 @@ export function assertConfig(
     )
   }
 
+  if (!req.host) return "NEXTAUTH_URL"
+  const url = parseUrl(req.host)
+
+  console.log(123)
+  const defaultCallbackUrlName = cookie.defaultCookies(
+    options.useSecureCookies ?? url.base.startsWith("https://")
+  ).callbackUrl.name
+  const callbackUrl =
+    req.cookies?.[options.cookies?.callbackUrl?.name ?? defaultCallbackUrlName]
+  if (callbackUrl && isValidHttpUrl(callbackUrl)) {
+    return new InvalidCallbackUrl(
+      `Invalid callback URL. Received: ${callbackUrl}`
+    )
+  }
+
   if (!options.secret) {
     if (process.env.NODE_ENV === "production") {
       return new MissingSecret("Please define a `secret` in production.")
@@ -43,8 +69,6 @@ export function assertConfig(
       return "NO_SECRET"
     }
   }
-
-  if (!req.host) return "NEXTAUTH_URL"
 
   let hasCredentials, hasEmail
   let hasTwitterOAuth2
