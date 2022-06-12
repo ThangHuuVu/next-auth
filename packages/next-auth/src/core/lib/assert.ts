@@ -21,8 +21,10 @@ type ConfigError =
 
 let twitterWarned = false
 
-function isValidHttpUrl(url: string) {
+function isValidHttpUrl(url: string, baseUrl: string) {
   try {
+    if (url.startsWith("/"))
+      return /^https?:/.test(new URL(url, baseUrl).protocol)
     return /^https?:/.test(new URL(url).protocol)
   } catch {
     return false
@@ -57,7 +59,10 @@ export function assertConfig(
 
   const callbackUrlParam = req.query?.callbackUrl as string | undefined
 
-  if (callbackUrlParam && !isValidHttpUrl(callbackUrlParam)) {
+  if (
+    callbackUrlParam &&
+    !isValidHttpUrl(callbackUrlParam, parseUrl(req.host).base)
+  ) {
     return new InvalidCallbackUrl(
       `Invalid callback URL. Received: ${callbackUrlParam}`
     )
@@ -73,7 +78,7 @@ export function assertConfig(
   const callbackUrlCookie =
     req.cookies?.[options.cookies?.callbackUrl?.name ?? defaultCallbackUrl.name]
 
-  if (callbackUrlCookie && !isValidHttpUrl(callbackUrlCookie)) {
+  if (callbackUrlCookie && !isValidHttpUrl(callbackUrlCookie, url.base)) {
     return new InvalidCallbackUrl(
       `Invalid callback URL. Received: ${callbackUrlCookie}`
     )
